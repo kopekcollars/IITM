@@ -11,11 +11,31 @@ Map Address check: https://www.maps.ie/coordinates.html
 
 SoftwareSerial serial_connection(5,6); //tx,rx 
 TinyGPSPlus gps;// GPS object to process the NMEA data
+
+// Placeholder for starting latitude and longitude
+double startLat = 0, startLng = 0;
+float totalDistance = 0; // in meters
+int totalSteps = 0;
+
 void setup()
 {
   Serial.begin(9600);                //This opens up communications to the Serial monitor in the Arduino IDE
   serial_connection.begin(9600);     //This opens up communications to the GPS
-  Serial.println("GPS Start");        //To show in the serial monitor that the sketch has started
+  Serial.println("GPS Start")        //To show in the serial monitor that the sketch has started
+
+  // Wait for GPS connection
+  Serial.print(F("Waiting for GPS signal "));
+  while (!gps.location.isValid()) {
+    while (serial_connection.available() > 0) {
+      gps.encode(serial_connection.read());
+    }
+  }
+
+  Serial.println(F("GPS signal acquired!"));
+
+  startLat = gps.location.lat();
+  startLng = gps.location.lng();
+
 }
 
 void loop()
@@ -33,6 +53,7 @@ void loop()
     Serial.println(gps.location.lat(), 6);
     Serial.print("Longitude:");
     Serial.println(gps.location.lng(), 6);
+
     
     Serial.print("Altitude Feet:");
     Serial.println(gps.altitude.feet());
@@ -61,8 +82,37 @@ void loop()
     Serial.print(gps.time.second());
     Serial.print(".GMT");
   }
+
   Serial.println("");
-  delay(2000);
+
+  // Current position
+  double currentLat = gps.location.lat();
+  double currentLng = gps.location.lng();
+
+  // Calculate distance travelled since last check
+  float distanceTravelled = TinyGPSPlus::distanceBetween(
+    startLat, startLng,
+    currentLat, currentLng
+  );
+
+  // Convert meters to steps assuming 0.5 meter stride length
+  int steps = distanceTravelled / 0.5;
+
+  // Update total distance and steps
+  totalDistance += distanceTravelled;
+  totalSteps += steps;
+
+  // Display current distance and steps
+  Serial.print(F("Distance: "));
+  Serial.print(totalDistance);
+  Serial.print(F(" m, Steps: "));
+  Serial.println(totalSteps);
+
+  // Update starting position for next calculation
+  startLat = currentLat;
+  startLng = currentLng;
+  
+  delay(5000);
   }
   
 }

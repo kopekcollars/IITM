@@ -1,118 +1,136 @@
-/*
-Automation bd
-Facebook:         https://web.facebook.com/groups/844063765941384
-Website:          https://automationbd1.blogspot.com
-YouTube:          https://www.youtube.com/channel/UCz4uQlukt3UfEjh2oEqpySg
-Map Address check: https://www.maps.ie/coordinates.html
-*/
+#include <SoftwareSerial.h>
+#include <ESP8266WiFi.h>
+#include <TinyGPS++.h>
 
-#include "TinyGPS++.h"
-#include "SoftwareSerial.h"
+TinyGPSPlus gps;
+SoftwareSerial SerialGPS(4, 5); 
+const int signal = D4;
+const char* ssid = "901";
+const char* password = "ojalpari1603";
 
-SoftwareSerial serial_connection(5,6); //tx,rx 
-TinyGPSPlus gps;// GPS object to process the NMEA data
+float Latitude , Longitude;
+int year , month , date, hour , minute , second;
+String DateString , TimeString , LatitudeString , LongitudeString;
 
-// Placeholder for starting latitude and longitude
-double startLat = 0, startLng = 0;
-float totalDistance = 0; // in meters
-int totalSteps = 0;
 
+WiFiServer server(80);
 void setup()
 {
-  Serial.begin(9600);                //This opens up communications to the Serial monitor in the Arduino IDE
-  serial_connection.begin(9600);     //This opens up communications to the GPS
-  Serial.println("GPS Start")        //To show in the serial monitor that the sketch has started
-
-  // Wait for GPS connection
-  Serial.print(F("Waiting for GPS signal "));
-  while (!gps.location.isValid()) {
-    while (serial_connection.available() > 0) {
-      gps.encode(serial_connection.read());
-    }
+  Serial.begin(9600);
+  SerialGPS.begin(9600);
+  Serial.println();
+  Serial.print("Connecting");
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
   }
+  Serial.println("");
+  Serial.println("WiFi connected");
 
-  Serial.println(F("GPS signal acquired!"));
-
-  startLat = gps.location.lat();
-  startLng = gps.location.lng();
-
+  server.begin();
+  Serial.println("Server started");
+  Serial.println(WiFi.localIP());
 }
 
 void loop()
 {
-  while(serial_connection.available())              //While there are incoming characters  from the GPS
-  {
-    gps.encode(serial_connection.read());           //This feeds the serial NMEA data into the library one char at a time
-  }
-  if(gps.location.isUpdated())          //This will pretty much be fired all the time anyway but will at least reduce it to only after a package of NMEA data comes in
-  {
-    //Get the latest info from the gps object which it derived from the data sent by the GPS unit
-    Serial.print("Satellite Count:");
-    Serial.println(gps.satellites.value());
-    Serial.print("Latitude:");
-    Serial.println(gps.location.lat(), 6);
-    Serial.print("Longitude:");
-    Serial.println(gps.location.lng(), 6);
+  while (SerialGPS.available() > 0)
+    if (gps.encode(SerialGPS.read()))
+    {
+      if (gps.location.isValid())
+      {
+        Latitude = gps.location.lat();
+        LatitudeString = String(Latitude , 6);
+        Longitude = gps.location.lng();
+        LongitudeString = String(Longitude , 6);
+      }
 
+      if (gps.date.isValid())
+      {
+        DateString = "";
+        date = gps.date.day();
+        month = gps.date.month();
+        year = gps.date.year();
+
+        if (date < 10)
+        DateString = '0';
+        DateString += String(date);
+
+        DateString += " / ";
+
+        if (month < 10)
+        DateString += '0';
+        DateString += String(month);
+        DateString += " / ";
+
+        if (year < 10)
+        DateString += '0';
+        DateString += String(year);
+      }
+
+      if (gps.time.isValid())
+      {
+        TimeString = "";
+        hour = gps.time.hour()+ 5; //adjust UTC
+        minute = gps.time.minute();
+        second = gps.time.second();
     
-    Serial.print("Altitude Feet:");
-    Serial.println(gps.altitude.feet());
-    Serial.println("");
+        if (hour < 10)
+        TimeString = '0';
+        TimeString += String(hour);
+        TimeString += " : ";
 
-    Serial.print("Date: ");
-  if (gps.date.isValid())
+        if (minute < 10)
+        TimeString += '0';
+        TimeString += String(minute);
+        TimeString += " : ";
+
+        if (second < 10)
+        TimeString += '0';
+        TimeString += String(second);
+      }
+
+    }
+  WiFiClient client = server.available();
+  if (!client)
   {
-    Serial.print(gps.date.month());
-    Serial.print("/");
-    Serial.print(gps.date.day());
-    Serial.print("/");
-    Serial.println(gps.date.year());
+    return;
   }
+
+  //Response
+  String s = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n <!DOCTYPE html> <html> <head> <title>NEO-6M GPS Readings</title> <style>";
+  s += "table, th, td {border: 1px solid blue;} </style> </head> <body> <h1  style=";
+  s += "font-size:300%;";
+  s += " ALIGN=CENTER>NEO-6M GPS Readings</h1>";
+  s += "<p ALIGN=CENTER style=""font-size:150%;""";
+  s += "> <b>Location Details</b></p> <table ALIGN=CENTER style=";
+  s += "width:50%";
+  s += "> <tr> <th>Latitude</th>";
+  s += "<td ALIGN=CENTER >";
+  s += LatitudeString;
+  s += "</td> </tr> <tr> <th>Longitude</th> <td ALIGN=CENTER >";
+  s += LongitudeString;
+  s += "</td> </tr> <tr>  <th>Date</th> <td ALIGN=CENTER >";
+  s += DateString;
+  s += "</td></tr> <tr> <th>Time</th> <td ALIGN=CENTER >";
+  s += TimeString;
+  s += "</td>  </tr> </table> ";
+ 
   
-  Serial.print("Time: ");
-  if (gps.time.isValid())
+  if (gps.location.isValid())
   {
-    if (gps.time.hour() < 10) Serial.print(F("0"));
-    Serial.print(gps.time.hour());
-    Serial.print(":");
-    if (gps.time.minute() < 10) Serial.print(F("0"));
-    Serial.print(gps.time.minute());
-    Serial.print(":");
-    if (gps.time.second() < 10) Serial.print(F("0"));
-    Serial.print(gps.time.second());
-    Serial.print(".GMT");
+    s += "<p align=center><a style=""color:RED;font-size:125%;"" href=""http://maps.google.com/maps?&z=15&mrt=yp&t=k&q=";
+    s += LatitudeString;
+    s += "+";
+    s += LongitudeString;
+    s += """ target=""_top"">Click here</a> to open the location in Google Maps.</p>";
   }
 
-  Serial.println("");
+  s += "</body> </html> \n";
 
-  // Current position
-  double currentLat = gps.location.lat();
-  double currentLng = gps.location.lng();
+  client.print(s);
+  delay(100);
 
-  // Calculate distance travelled since last check
-  float distanceTravelled = TinyGPSPlus::distanceBetween(
-    startLat, startLng,
-    currentLat, currentLng
-  );
-
-  // Convert meters to steps assuming 0.5 meter stride length
-  int steps = distanceTravelled / 0.5;
-
-  // Update total distance and steps
-  totalDistance += distanceTravelled;
-  totalSteps += steps;
-
-  // Display current distance and steps
-  Serial.print(F("Distance: "));
-  Serial.print(totalDistance);
-  Serial.print(F(" m, Steps: "));
-  Serial.println(totalSteps);
-
-  // Update starting position for next calculation
-  startLat = currentLat;
-  startLng = currentLng;
-  
-  delay(5000);
-  }
-  
 }

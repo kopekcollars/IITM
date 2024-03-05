@@ -100,16 +100,7 @@ void loop()
   }
 
   //Response
-  String s = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n <!DOCTYPE html> <html> <head> <title>Kopek Collars</title> <style>";
-  s += "body { background: linear-gradient(to bottom, #3D3B8E, #B9D6F2, #F37748, #A1C181, #5998C5); }"; // Background gradient added
-  s += "table, th, td {border: 1px solid blue;} </style> </head> <body> <h1  style=";
-  s += "font-size:300%;";
-  s += " ALIGN=CENTER>Kopek collars</h1>";
-  s += "<p ALIGN=CENTER style=""font-size:150%;""";
-  s += "> <b>Location Details</b></p> <table ALIGN=CENTER style=";
-  s += "width:50%";
-  s += "> <tr> <th>Latitude</th>";
-  s += "<td ALIGN=CENTER >";
+  String s = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n <!DOCTYPE html> <html> <head> <title>Kopek collars</title> <style>body { background: linear-gradient(to right, #3D3B8E, #B9D6F2, #F37748, #A1C181, #5998C5); } table, th, td {border: 1px solid blue;} </style> </head> <body> <h1 style=\"font-size:300%;\" ALIGN=CENTER>Kopek collars</h1><p ALIGN=CENTER style=\"font-size:150%;\"> <b>Location Details</b></p> <table ALIGN=CENTER style=\"width:50%\"><tr> <th>Latitude</th><td ALIGN=CENTER >";
   s += LatitudeString;
   s += "</td> </tr> <tr> <th>Longitude</th> <td ALIGN=CENTER >";
   s += LongitudeString;
@@ -118,17 +109,14 @@ void loop()
   s += "</td></tr> <tr> <th>Time</th> <td ALIGN=CENTER >";
   s += TimeString;
   s += "</td>  </tr> </table> ";
- 
-  
   if (gps.location.isValid())
   {
-    s += "<p align=center><a style=""color:RED;font-size:125%;"" href=""http://maps.google.com/maps?&z=15&mrt=yp&t=k&q=";
+    s += "<p align=center><a style=\"color:RED;font-size:125%;\" href=\"http://maps.google.com/maps?&z=15&mrt=yp&t=k&q=";
     s += LatitudeString;
     s += "+";
     s += LongitudeString;
-    s += """ target=""_top"">Click here</a> to open the location in Google Maps.</p>";
+    s += "\" target=\"_top\">Click here</a> to open the location in Google Maps.</p>";
   }
-
   s += "</body> </html> \n";
 
   client.print(s);

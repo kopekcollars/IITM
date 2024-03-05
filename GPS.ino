@@ -100,10 +100,11 @@ void loop()
   }
 
   //Response
-  String s = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n <!DOCTYPE html> <html> <head> <title>NEO-6M GPS Readings</title> <style>";
+  String s = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n <!DOCTYPE html> <html> <head> <title>Kopek Collars</title> <style>";
+  s += "body { background: linear-gradient(to bottom, #3D3B8E, #B9D6F2, #F37748, #A1C181, #5998C5); }"; // Background gradient added
   s += "table, th, td {border: 1px solid blue;} </style> </head> <body> <h1  style=";
   s += "font-size:300%;";
-  s += " ALIGN=CENTER>NEO-6M GPS Readings</h1>";
+  s += " ALIGN=CENTER>Kopek collars</h1>";
   s += "<p ALIGN=CENTER style=""font-size:150%;""";
   s += "> <b>Location Details</b></p> <table ALIGN=CENTER style=";
   s += "width:50%";

@@ -5,8 +5,8 @@
 TinyGPSPlus gps;
 SoftwareSerial SerialGPS(4, 5); 
 const int signal = D4;
-const char* ssid = "901";
-const char* password = "ojalpari1603";
+const char* ssid = "WIFI_USERNAME";
+const char* password = "WIFI_PASSWORD";
 
 float Latitude , Longitude;
 int year , month , date, hour , minute , second;
